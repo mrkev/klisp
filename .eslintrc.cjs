@@ -10,6 +10,10 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   plugins: ["react-refresh"],
   rules: {
+    // Turned off because:
+    //   return [<Editor {...props} onMount={editorDidMount} />, editor]
+    // returns error
+    "react/jsx-key": "off",
     "react/no-unescaped-entities": "off",
     "react-refresh/only-export-components": [
       "warn",

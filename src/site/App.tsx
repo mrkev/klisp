@@ -1,131 +1,194 @@
-import { useState } from "react";
-import viteLogo from "/vite.svg";
+import { Allotment } from "allotment";
+import "allotment/dist/style.css";
+import * as monaco from "monaco-editor";
+import { editor } from "monaco-editor";
+import { useCallback, useState } from "react";
+import { useLocalStorage } from "usehooks-ts";
+import { tryParse } from "..";
+import { InterpreterSystem } from "../lib/interpreter/env";
+import { interpret } from "../lib/interpreter/interpreter";
 import "./App.css";
-import { add } from "..";
-import GitHubButton from "react-github-btn";
+import { useEditor } from "./useEditor";
 
-const FOLDER_STRUCTURE = `dist/            built library, gitignored
-docs/            built website, configure GH Pages to point here
-src/
-  lib/           
-  site/          site goes here. Ignored when generating .d.ts files
-  public/        vite "public" folder for the site
-  index.html     site entry file
-  index.ts       library entry file
-`;
+const COMPACT_AST = true;
+
+const DEFAULT_SCRIPT = `
+(list 1 2 (cons 1 (list)))
+(print 5 golden rings)`;
+
+const scriptEditorOptions: editor.IStandaloneEditorConstructionOptions = {
+  fontSize: 16,
+  insertSpaces: true,
+  tabSize: 2,
+  detectIndentation: false,
+  minimap: { enabled: false },
+  readOnly: false,
+} as const;
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [fatalScriptError, setFatalScriptError] = useState<Error | null>(null);
+  const [systemError, setSystemError] = useState<Error | null>(null);
+  const [log, setLog] = useState<(Error | string)[]>([]);
+
+  const [script, setScript] = useLocalStorage("klisp.script", DEFAULT_SCRIPT);
+
+  const [decoratorRange, setDecoratorRange] = useState<null | monaco.Range>(
+    null
+  );
+  const [scriptEditor, scriptEditorObj] = useEditor(
+    {
+      onChange: () => setDecoratorRange(null),
+      language: "scheme",
+      theme: "vs-dark",
+      options: scriptEditorOptions,
+      height: "100%",
+      defaultValue: script,
+      // try "same", "indent" or "none"
+      // wrappingIndent: "indent",
+      // beforeMount: registerLangForMonaco,
+    },
+    decoratorRange
+  );
+
+  const [astEditor, astEditorObj] = useEditor({
+    language: "json",
+    theme: "vs-dark",
+    height: "100%",
+    options: {
+      readOnly: true,
+      folding: true,
+    },
+  });
+
+  const doEvaluate = useCallback(() => {
+    const system = new InterpreterSystem();
+    const editor = scriptEditorObj;
+
+    try {
+      if (editor == null) {
+        throw new Error("no editor");
+      }
+
+      const script = editor.getValue();
+      setScript(script);
+      setDecoratorRange(null);
+      setFatalScriptError(null);
+      setSystemError(null);
+
+      const ast = tryParse(script);
+      const replacer = (key: string, value: any) => {
+        if (key === "@") {
+          return `${value.start.line}:${value.start.column}:${value.end.line}:${value.end.column}`;
+        } else {
+          return value;
+        }
+      };
+      const strvalue = JSON.stringify(
+        ast,
+        COMPACT_AST ? replacer : undefined,
+        2
+      );
+
+      astEditorObj?.setValue(strvalue);
+
+      const finalContext = interpret(ast);
+      // setFinalContext(finalContext);
+    } catch (e) {
+      if (e instanceof Error) {
+        setSystemError(e);
+      } else if (typeof e === "string") {
+        setSystemError(new Error(e));
+      } else {
+        console.error(e);
+      }
+    }
+
+    setFatalScriptError(system.console._fatalError);
+    setLog(system.console._log);
+  }, [astEditorObj, scriptEditorObj, setScript]);
+
+  // useEffect(() => {
+  //   if (!astEditorObj) {
+  //     return;
+  //   }
+
+  //   const disposable = astEditorObj.onDidChangeCursorPosition(async (e) => {
+  //     const editor = astEditorObj;
+  //     const model = editor.getModel();
+  //     setDecoratorRange(null);
+  //     if (!model) {
+  //       return null;
+  //     }
+
+  //     const value = getJSONObjectAtPosition(e.position, editor);
+
+  //     try {
+  //       if (value instanceof Error) {
+  //         throw value;
+  //       }
+
+  //       const parsed = JSON.parse(value);
+  //       const { kind, "@": pos } = parsed;
+  //       if (!kind || !pos || kind === "Program") {
+  //         return;
+  //       }
+
+  //       if (typeof pos === "string") {
+  //         const [sl, sc, el, ec] = pos.split(":").map((s) => parseInt(s));
+  //         setDecoratorRange(new monaco.Range(sl, sc, el, ec));
+  //       } else {
+  //         setDecoratorRange(
+  //           new monaco.Range(
+  //             pos.start.line,
+  //             pos.start.column,
+  //             pos.end.line,
+  //             pos.end.column
+  //           )
+  //         );
+  //         console.log(`${kind}@[${pos.start.line}:${pos.start.column}]`);
+  //       }
+  //     } catch (e) {
+  //       console.groupCollapsed("cant parse");
+  //       console.log("value", value);
+  //       console.error(e);
+  //       console.groupEnd();
+  //     }
+  //   });
+
+  //   return () => {
+  //     disposable.dispose();
+  //   };
+  // }, [astEditorObj]);
 
   return (
     <>
-      <h1>
-        Simple
-        <br />
-        Vite + React + TypeScript
-        <br />
-        Library Template
-      </h1>
+      <Allotment>
+        <Allotment.Pane minSize={100} maxSize={200}>
+          <button onClick={doEvaluate}>eval</button>
+        </Allotment.Pane>
+        <Allotment>
+          <Allotment vertical>
+            <Allotment.Pane>{scriptEditor}</Allotment.Pane>
+            <Allotment.Pane>{"results:"}</Allotment.Pane>
+          </Allotment>
+          <Allotment.Pane>{astEditor}</Allotment.Pane>
+        </Allotment>
 
-      <p>
-        <a href="https://github.com/mrkev/new-react-ts-lib">
-          github.com/mrkev/new-react-ts-lib
-        </a>
-      </p>
-
-      <GitHubButton
-        href="https://github.com/mrkev/new-react-ts-lib"
-        data-color-scheme="no-preference: light; light: light; dark: dark;"
-        data-icon="octicon-star"
-        data-size="large"
-        aria-label="Star mrkev/new-react-ts-lib on GitHub"
-      >
-        Star
-      </GitHubButton>
-      <GitHubButton
-        href="https://github.com/mrkev/new-react-ts-lib/generate"
-        data-color-scheme="no-preference: light; light: light; dark: dark;"
-        data-icon="octicon-repo-template"
-        data-size="large"
-        aria-label="Use this template mrkev/new-react-ts-lib on GitHub"
-      >
-        Use this template
-      </GitHubButton>
-
-      {/* Instructions */}
-      <h2 className="left">Getting Started</h2>
-      <ol style={{ textAlign: "left" }}>
-        <li>
-          Click <code>"Use Template"</code> above
-        </li>
-        <li>Clone the repo you created</li>
-        <li>Use these scripts:</li>
-        {/* Scripts */}
-        <ul style={{ textAlign: "left" }}>
-          <li>
-            <code>build</code> builds this website and the library ready for
-            publishing
-          </li>
-          <li>
-            <code>build:site</code> builds only the website
-          </li>
-          <li>
-            <code>build:lib</code> builds only the library
-          </li>
-          <li>
-            <code>dev</code> starts the dev server
-          </li>
-        </ul>
-        <li>Edit away!</li>
-        <details>
-          <summary>Folder structure</summary>
-          <pre
-            style={{
-              textAlign: "left",
-              background: "black",
-              color: "white",
-              padding: "2px 3px 1px 3px",
-            }}
-          >
-            {FOLDER_STRUCTURE}
-          </pre>
-        </details>
-      </ol>
-      <hr></hr>
-
-      <p className="left">
-        This sample library just adds two numbers.
-        <br />
-        The latest version is always built with the site:
-      </p>
-      <button onClick={() => setCount((count) => add(count, 1))}>
-        add one: {count}
-      </button>
-      <p></p>
-
-      <hr></hr>
-
-      <p
-        className="read-the-docs"
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "5px",
-          justifyContent: "center",
-        }}
-      >
-        <a href="https://aykev.dev/">Kevin Chavez</a> ·
-        <a href="https://twitter.com/aykev">@aykev</a> ·
-        <GitHubButton
-          href="https://github.com/mrkev"
-          data-color-scheme="no-preference: light; light: light; dark: dark;"
-          data-size="large"
-          data-show-count="true"
-          aria-label="Follow @mrkev on GitHub"
+        {/* <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gridTemplateRows: "repeat(2, 1fr)",
+          }}
         >
-          Follow @mrkev
-        </GitHubButton>
-      </p>
+          {scriptEditor}
+          {features.has("ast") ? astEditor : <div />}
+          {evaluationBox}
+          {features.has("compile") ? tsEditor : <div />} }
+        </div> */}
+      </Allotment>
     </>
   );
 }
