@@ -1,1 +1,1 @@
-export { tryParse } from "./lib/lisp";
+export { tryParse } from "./lib/parser/parser";

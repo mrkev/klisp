@@ -22,7 +22,7 @@ const Lisp = P.createLanguage<LangType>({
   // The basic parsers (usually the ones described via regexp) should have a
   // description for error message purposes.
   Symbol: function () {
-    return P.regexp(/[a-zA-Z_-][a-zA-Z0-9_-]*/)
+    return P.regexp(/[a-zA-Z_\-\+\*\/][a-zA-Z0-9_-]*/)
       .desc("symbol")
       .map((symbol) => ({ kind: "symbol", symbol }));
   },

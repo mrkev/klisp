@@ -2,13 +2,21 @@ import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import * as monaco from "monaco-editor";
 import { editor } from "monaco-editor";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { tryParse } from "..";
-import { InterpreterSystem } from "../lib/interpreter/env";
-import { interpret } from "../lib/interpreter/interpreter";
+import { Environment } from "../lib/interpreter/env";
+import { interpret, stringOfValue } from "../lib/interpreter/interpreter";
+import { InterpreterSystem } from "../lib/interpreter/system";
+import { ValType } from "../lib/interpreter/value";
 import "./App.css";
 import { useEditor } from "./useEditor";
+
+function div(str: string) {
+  const elem = document.createElement("div");
+  elem.appendChild(document.createTextNode(str));
+  return elem;
+}
 
 const COMPACT_AST = true;
 
@@ -25,10 +33,11 @@ const scriptEditorOptions: editor.IStandaloneEditorConstructionOptions = {
   readOnly: false,
 } as const;
 
-function App() {
+export function App() {
   const [fatalScriptError, setFatalScriptError] = useState<Error | null>(null);
   const [systemError, setSystemError] = useState<Error | null>(null);
   const [log, setLog] = useState<(Error | string)[]>([]);
+  const logRef = useRef<HTMLDivElement>(null);
 
   const [script, setScript] = useLocalStorage("klisp.script", DEFAULT_SCRIPT);
 
@@ -64,6 +73,20 @@ function App() {
     const system = new InterpreterSystem();
     const editor = scriptEditorObj;
 
+    function log(x: string | Error | ValType["Value"]) {
+      if (!logRef.current) {
+        return;
+      }
+
+      if (typeof x === "string") {
+        logRef.current.appendChild(div(x));
+      } else if (x instanceof Error) {
+        logRef.current.appendChild(div(`Error: ${x.message}`));
+      } else {
+        logRef.current.appendChild(div(stringOfValue(x)));
+      }
+    }
+
     try {
       if (editor == null) {
         throw new Error("no editor");
@@ -91,13 +114,17 @@ function App() {
 
       astEditorObj?.setValue(strvalue);
 
-      const finalContext = interpret(ast);
+      const context = Environment.standard();
+
+      const result = interpret(ast, context, system);
+      log(result);
+
       // setFinalContext(finalContext);
     } catch (e) {
       if (e instanceof Error) {
-        setSystemError(e);
+        log(e);
       } else if (typeof e === "string") {
-        setSystemError(new Error(e));
+        log(e);
       } else {
         console.error(e);
       }
@@ -169,28 +196,26 @@ function App() {
         <Allotment>
           <Allotment vertical>
             <Allotment.Pane>{scriptEditor}</Allotment.Pane>
-            <Allotment.Pane>{"results:"}</Allotment.Pane>
+            <Allotment.Pane>
+              {"results:"}
+              {log.map((x, i) => {
+                if (typeof x === "string") {
+                  return <div key={i}>{x}</div>;
+                } else {
+                  return <div key={i}>{x.message}</div>;
+                }
+              })}
+              {systemError?.message}
+              {fatalScriptError?.message}
+              <div
+                ref={logRef}
+                style={{ display: "flex", flexDirection: "column" }}
+              ></div>
+            </Allotment.Pane>
           </Allotment>
           <Allotment.Pane>{astEditor}</Allotment.Pane>
         </Allotment>
-
-        {/* <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gridTemplateRows: "repeat(2, 1fr)",
-          }}
-        >
-          {scriptEditor}
-          {features.has("ast") ? astEditor : <div />}
-          {evaluationBox}
-          {features.has("compile") ? tsEditor : <div />} }
-        </div> */}
       </Allotment>
     </>
   );
 }
-
-export default App;
