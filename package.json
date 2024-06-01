@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && npm run build:lib && npm run build:site",
-    "build:site": "vite build -c vite.config.ts",
+    "build:site": "vite build -c vite.config.ts --emptyOutDir",
     "build:lib": "vite build -c vite.config.lib.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
