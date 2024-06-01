@@ -22,9 +22,10 @@ function div(str: string, classname?: string | null) {
 
 const COMPACT_AST = true;
 
-const DEFAULT_SCRIPT = `
-(list 1 2 (cons 1 (list)))
-(print 5 golden rings)`;
+const DEFAULT_SCRIPT = `(print (+ 1 (+ 2 3)))
+(print 32)
+
+(/ 54 12)`;
 
 const scriptEditorOptions: editor.IStandaloneEditorConstructionOptions = {
   fontSize: 16,
