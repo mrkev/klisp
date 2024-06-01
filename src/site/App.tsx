@@ -11,9 +11,11 @@ import { InterpreterSystem } from "../lib/interpreter/system";
 import { ValType } from "../lib/interpreter/value";
 import "./App.css";
 import { useEditor } from "./useEditor";
+import { createUseStyles } from "react-jss";
 
-function div(str: string) {
+function div(str: string, classname?: string | null) {
   const elem = document.createElement("div");
+  classname != null && elem.setAttribute("class", classname);
   elem.appendChild(document.createTextNode(str));
   return elem;
 }
@@ -34,6 +36,7 @@ const scriptEditorOptions: editor.IStandaloneEditorConstructionOptions = {
 } as const;
 
 export function App() {
+  const styles = useStyles();
   const [fatalScriptError, setFatalScriptError] = useState<Error | null>(null);
   const [systemError, setSystemError] = useState<Error | null>(null);
   const [log, setLog] = useState<(Error | string)[]>([]);
@@ -70,20 +73,28 @@ export function App() {
   });
 
   const doEvaluate = useCallback(() => {
+    logRef.current?.replaceChildren();
     const system = new InterpreterSystem();
     const editor = scriptEditorObj;
 
-    function log(x: string | Error | ValType["Value"]) {
+    function log(
+      x: string | Error | ValType["Value"],
+      as: "log" | "value" | "error"
+    ) {
       if (!logRef.current) {
         return;
       }
 
+      const classname =
+        as === "error" ? styles.logerror : as === "log" ? styles.logitem : null;
+
+      console.log(classname);
       if (typeof x === "string") {
-        logRef.current.appendChild(div(x));
+        logRef.current.appendChild(div(x, classname));
       } else if (x instanceof Error) {
-        logRef.current.appendChild(div(`Error: ${x.message}`));
+        logRef.current.appendChild(div(`Error: ${x.message}`, styles.logerror));
       } else {
-        logRef.current.appendChild(div(stringOfValue(x)));
+        logRef.current.appendChild(div(stringOfValue(x), classname));
       }
     }
 
@@ -115,16 +126,20 @@ export function App() {
       astEditorObj?.setValue(strvalue);
 
       const context = Environment.standard();
-
       const result = interpret(ast, context, system);
-      log(result);
+
+      for (const logitem of system.console._log) {
+        log(logitem, "log");
+      }
+
+      log(result, "value");
 
       // setFinalContext(finalContext);
     } catch (e) {
       if (e instanceof Error) {
-        log(e);
+        log(e, "error");
       } else if (typeof e === "string") {
-        log(e);
+        log(e, "error");
       } else {
         console.error(e);
       }
@@ -132,26 +147,27 @@ export function App() {
 
     setFatalScriptError(system.console._fatalError);
     setLog(system.console._log);
-  }, [astEditorObj, scriptEditorObj, setScript]);
+  }, [
+    astEditorObj,
+    scriptEditorObj,
+    setScript,
+    styles.logerror,
+    styles.logitem,
+  ]);
 
   return (
     <>
       <Allotment>
-        <Allotment.Pane minSize={100} maxSize={200}>
-          <button onClick={doEvaluate}>eval</button>
+        <Allotment.Pane minSize={100} maxSize={300} className={styles.sidebar}>
+          <h2>klisp</h2>
+          <p>A very simple lisp by Kevin Chavez</p>
         </Allotment.Pane>
         <Allotment>
           <Allotment vertical>
             <Allotment.Pane>{scriptEditor}</Allotment.Pane>
             <Allotment.Pane>
-              {"results:"}
-              {log.map((x, i) => {
-                if (typeof x === "string") {
-                  return <div key={i}>{x}</div>;
-                } else {
-                  return <div key={i}>{x.message}</div>;
-                }
-              })}
+              <button onClick={doEvaluate}>eval</button>
+
               {systemError?.message}
               {fatalScriptError?.message}
               <div
@@ -166,3 +182,15 @@ export function App() {
     </>
   );
 }
+
+const useStyles = createUseStyles({
+  sidebar: {
+    padding: "0px 6px",
+  },
+  logitem: {
+    color: "gray",
+  },
+  logerror: {
+    color: "red",
+  },
+});
