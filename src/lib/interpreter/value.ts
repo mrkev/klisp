@@ -29,10 +29,14 @@ export const v = {
     return { kind: "nil" };
   },
   closure(
-    lambda: Array<LangType["Expression"]>,
+    args: string[],
+    body: Array<LangType["Expression"]>,
     env: Environment
   ): ValType["Closure"] {
-    return { kind: "closure", closure: new Closure(lambda, env.scope.clone()) };
+    return {
+      kind: "closure",
+      closure: new Closure(args, body, env.scope.clone()),
+    };
   },
   op(op: BuiltInOp): ValType["BuiltInOp"] {
     return { kind: "op", op };
@@ -41,7 +45,8 @@ export const v = {
 
 class Closure {
   constructor(
-    readonly lambda: Array<LangType["Expression"]>,
+    readonly args: string[],
+    readonly body: Array<LangType["Expression"]>,
     readonly scope: ScopeStack
   ) {}
 }

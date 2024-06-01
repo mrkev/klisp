@@ -1,8 +1,8 @@
 import { LangType } from "../parser/parser";
 import { exhaustive } from "../utils";
-import { callOp } from "./builtins";
+import { evaluateOp } from "./builtins";
 import { Environment } from "./env";
-import { ScriptError } from "./error";
+import { ScriptError, ScriptPosError } from "./error";
 import { InterpreterSystem } from "./system";
 import { ValType, v } from "./value";
 
@@ -10,7 +10,7 @@ export function interpret(
   module: LangType["Module"],
   context: Environment,
   system: InterpreterSystem
-): ValType["Value"] | ScriptError | Error {
+): ValType["Value"] | ScriptError | ScriptPosError | Error {
   try {
     let result: ValType["Value"] = v.nil();
     for (const expr of module.exprs) {
@@ -28,7 +28,7 @@ export function interpret(
   }
 }
 
-function evaluate(
+export function evaluate(
   expr: LangType["Expression"],
   env: Environment,
   system: InterpreterSystem
@@ -39,59 +39,73 @@ function evaluate(
     }
 
     case "list": {
-      if (expr.list.length < 1) {
-        throw new ScriptError("Ill-formed expression");
-      }
-
-      const list = expr.list.map((x) => evaluate(x, env, system));
-      const [first, ...rest] = list;
-
-      if (first.kind !== "closure" && first.kind !== "op") {
-        throw new ScriptError("Operator is not a PROCEDURE");
-      }
-
-      return apply(first, rest, env, system);
+      return evaluateList(expr, env, system);
     }
 
     case "symbol":
-      return env.scope.get(expr.symbol);
+      return env.scope.get(expr);
 
     default:
       throw exhaustive(expr);
   }
 }
 
-// (define (foo x) 2)
-function apply(
-  val: ValType["Closure"] | ValType["BuiltInOp"],
-  args: Array<ValType["Value"]>,
+// (value cdr cdr cdr...)
+function evaluateList(
+  expr: LangType["List"],
   env: Environment,
   system: InterpreterSystem
 ) {
-  switch (val.kind) {
+  if (expr.list.length < 1) {
+    throw new ScriptPosError("Ill-formed expression", expr["@"]);
+  }
+
+  const [car, ...cdr] = expr.list;
+  const first = evaluate(car, env, system);
+  switch (first.kind) {
+    case "list":
+    case "nil":
+    case "number":
+      throw new ScriptPosError("Operator is not a PROCEDURE", expr["@"]);
+
+    //
     case "closure": {
-      const env = Environment.fromScope(val.closure.scope);
+      const envdown = Environment.fromScope(first.closure.scope);
+      envdown.scope.push();
+      if (cdr.length !== first.closure.args.length) {
+        throw new ScriptError("Wrong number of arguments passed to procedure");
+      }
+
+      for (let i = 0; i < cdr.length; i++) {
+        const argsym = first.closure.args[i];
+        const argval = evaluate(cdr[i], env, system);
+        envdown.scope.set(argsym, argval);
+      }
 
       // note, lambdas always have at leastone expression
       let result: ValType["Value"] = v.nil();
-      for (const expr of val.closure.lambda ?? []) {
-        result = evaluate(expr, env, system);
+      for (const expr of first.closure.body) {
+        result = evaluate(expr, envdown, system);
       }
 
+      // technically not necessary, but doing it for the sake fo symmetry
+      envdown.scope.pop();
       return result;
     }
+
     case "op": {
-      return callOp(val.op, args, env, system);
+      console.log(car, cdr);
+      return evaluateOp(first.op, cdr, env, system);
     }
     default:
-      throw exhaustive(val);
+      throw exhaustive(first);
   }
 }
 
 export function stringOfValue(val: ValType["Value"]): string {
   switch (val.kind) {
     case "closure":
-      return `<\\ closure.TODO>`;
+      return `(fun (${val.closure.args.join(" ")}) ...)`;
     case "list":
       return `(${val.list.map((v) => stringOfValue(v)).join(" ")})`;
     case "nil":

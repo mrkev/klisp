@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`lambda > x.args.1 1`] = `[Error: Wrong number of arguments passed to procedure]`;
+
+exports[`lambda > x.args.2 1`] = `[Error: Wrong number of arguments passed to procedure]`;

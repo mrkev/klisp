@@ -1,5 +1,6 @@
+import { LangType } from "../parser/parser";
 import { nullthrows } from "../utils";
-import { ScriptError } from "./error";
+import { ScriptError, ScriptPosError } from "./error";
 import { ValType, v } from "./value";
 
 // TODO: change ERRORS for more specific ones
@@ -11,9 +12,9 @@ export class Environment {
   static standard() {
     const scope = new ScopeStack();
     const env = new Environment(scope);
-    env.scope.set("zero", v.number(0));
     env.scope.set("print", v.op("print"));
     env.scope.set("let", v.op("let"));
+    env.scope.set("fun", v.op("fun"));
     env.scope.set("list", v.op("list"));
     env.scope.set("+", v.op("+"));
     env.scope.set("-", v.op("-"));
@@ -53,8 +54,9 @@ export class ScopeStack {
   // to create closures
   clone() {
     const stack: Array<Map<string, ValType["Value"]>> = [];
+    console.log(this.stack);
     for (const map of this.stack) {
-      this.stack.push(new Map(map));
+      stack.push(new Map(map));
       console.log("pushing");
     }
     return new ScopeStack(stack);
@@ -68,31 +70,31 @@ export class ScopeStack {
   }
 
   // throws
-  get(key: string, errMsg?: string): ValType["Value"] {
+  get(sym: LangType["Symbol"]): ValType["Value"] {
     for (let i = this.stack.length - 1; i > -1; i--) {
       const current = this.stack[i];
-      if (!current.has(key)) {
+      if (!current.has(sym.symbol)) {
         continue;
       }
       return nullthrows(
-        current.get(key),
+        current.get(sym.symbol),
         "impossible: checked for existance above"
       );
     }
 
-    throw new ScriptError(errMsg ?? `Unbound variable: ${key}`);
+    throw new ScriptPosError(`Unbound variable: ${sym.symbol}`, sym["@"]);
   }
 
   // let is:
   // - constant, can't redefine
   // - can however overwrite things in higher scopes
-  let(symbol: string, val: ValType["Value"]) {
+  let(sym: LangType["Symbol"], val: ValType["Value"]) {
     const top = this.top();
-    if (top.has(symbol)) {
-      throw new ScriptError("Cant overwrite constant: " + symbol);
+    if (top.has(sym.symbol)) {
+      throw new ScriptPosError("Cant overwrite constant: " + sym, sym["@"]);
     }
 
-    top.set(symbol, val);
+    top.set(sym.symbol, val);
   }
 
   // set is:

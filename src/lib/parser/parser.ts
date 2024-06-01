@@ -2,12 +2,21 @@
 
 import P from "parsimmon";
 
+export type LangPos = {
+  start: P.Index;
+  end: P.Index;
+};
+
 export type LangType = {
   Expression: LangType["Symbol"] | LangType["Number"] | LangType["List"];
-  Symbol: { kind: "symbol"; symbol: string };
-  Number: { kind: "number"; number: number };
-  List: { kind: "list"; list: Array<LangType["Expression"]> };
-  Module: { kind: "module"; exprs: Array<LangType["Expression"]> };
+  Symbol: { kind: "symbol"; symbol: string; "@": LangPos };
+  Number: { kind: "number"; number: number; "@": LangPos };
+  List: { kind: "list"; list: Array<LangType["Expression"]>; "@": LangPos };
+  Module: {
+    kind: "module";
+    exprs: Array<LangType["Expression"]>;
+    "@": LangPos;
+  };
 };
 
 const Lisp = P.createLanguage<LangType>({
@@ -24,7 +33,12 @@ const Lisp = P.createLanguage<LangType>({
   Symbol: function () {
     return P.regexp(/[a-zA-Z_\-\+\*\/][a-zA-Z0-9_-]*/)
       .desc("symbol")
-      .map((symbol) => ({ kind: "symbol", symbol }));
+      .mark()
+      .map(({ start, end, value }) => ({
+        kind: "symbol",
+        symbol: value,
+        "@": { start, end },
+      }));
   },
 
   // Note that Number("10") === 10, Number("9") === 9, etc in JavaScript.
@@ -33,7 +47,12 @@ const Lisp = P.createLanguage<LangType>({
     return P.regexp(/[0-9]+/)
       .map(Number)
       .desc("number")
-      .map((number) => ({ kind: "number", number }));
+      .mark()
+      .map(({ start, end, value }) => ({
+        kind: "number",
+        number: value,
+        "@": { start, end },
+      }));
   },
 
   // `.trim(P.optWhitespace)` removes whitespace from both sides, then `.many()`
@@ -43,16 +62,23 @@ const Lisp = P.createLanguage<LangType>({
     return r.Expression.trim(P.optWhitespace)
       .many()
       .wrap(P.string("("), P.string(")"))
-      .map((list) => ({ kind: "list", list }));
+      .mark()
+      .map(({ start, end, value }) => ({
+        kind: "list",
+        list: value,
+        "@": { start, end },
+      }));
   },
 
   // A file in Lisp is generally just zero or more expressions.
   Module: function (r) {
     return r.Expression.trim(P.optWhitespace)
       .many()
-      .map((exprs) => ({
+      .mark()
+      .map(({ start, end, value }) => ({
         kind: "module",
-        exprs,
+        exprs: value,
+        "@": { start, end },
       }));
   },
 });

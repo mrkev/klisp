@@ -26,6 +26,12 @@ function testOk(testname: string, script: string, res: string) {
   });
 }
 
+function testErr(testname: string, script: string) {
+  it(testname, () => {
+    expect(() => run(script)).toThrowErrorMatchingSnapshot();
+  });
+}
+
 describe("math", () => {
   testOk("+", "(+ 3 4)", "7");
   testOk("-", "(- 3 4)", "-1");
@@ -37,4 +43,13 @@ describe("math", () => {
 
 describe("list", () => {
   testOk("list", "(list 3 4)", "(3 4)");
+});
+
+describe("lambda", () => {
+  testOk("id", "(fun x x)", "(fun (x) ...)");
+  testOk("id.2", "(fun (x) x)", "(fun (x) ...)");
+  testOk("apply", "((fun (x) x) 3)", "3");
+  testErr("x.args.1", "((fun (x) x) 3 3)");
+  testErr("x.args.2", "((fun (x y) (+ x y)) 3)");
+  testOk("body list", "((fun (x y) (+ x y) (- x y)) 3 2)", "1");
 });

@@ -12,6 +12,9 @@ import { ValType } from "../lib/interpreter/value";
 import "./App.css";
 import { useEditor } from "./useEditor";
 import { createUseStyles } from "react-jss";
+import Markdown from "react-markdown";
+import { ScriptError, ScriptPosError } from "../lib/interpreter/error";
+import { LangPos } from "../lib/parser/parser";
 
 function div(str: string, classname?: string | null) {
   const elem = document.createElement("div");
@@ -26,6 +29,20 @@ const DEFAULT_SCRIPT = `(print (+ 1 (+ 2 3)))
 (print 32)
 
 (/ 54 12)`;
+
+const README = `
+# klisp
+
+A very simple lisp by Kevin Chavez
+
+Includes:
+- arithmetic (\`+\`, \`-\`, \`*\`, \`*\`)
+- \`(print 42)\` logs a value
+- \`(list 1 2 foo 3)\` create lists
+- \`(fun (x) (+ x x))\` create functions (lambdas)
+`;
+
+// - \`(let ((foo 2) (bar 2)) (print foo bar))\` define variables and use them
 
 const scriptEditorOptions: editor.IStandaloneEditorConstructionOptions = {
   fontSize: 16,
@@ -92,6 +109,10 @@ export function App() {
       console.log(classname);
       if (typeof x === "string") {
         logRef.current.appendChild(div(x, classname));
+      } else if (x instanceof ScriptPosError) {
+        logRef.current.appendChild(
+          div(`Error: ${x.message} at ${posToStr(x.pos)}`, styles.logerror)
+        );
       } else if (x instanceof Error) {
         logRef.current.appendChild(div(`Error: ${x.message}`, styles.logerror));
       } else {
@@ -160,8 +181,7 @@ export function App() {
     <>
       <Allotment>
         <Allotment.Pane minSize={100} maxSize={300} className={styles.sidebar}>
-          <h2>klisp</h2>
-          <p>A very simple lisp by Kevin Chavez</p>
+          <Markdown>{README}</Markdown>
         </Allotment.Pane>
         <Allotment>
           <Allotment vertical>
@@ -195,3 +215,7 @@ const useStyles = createUseStyles({
     color: "red",
   },
 });
+
+function posToStr(value: LangPos) {
+  return `${value.start.line}:${value.start.column}:${value.end.line}:${value.end.column}`;
+}
