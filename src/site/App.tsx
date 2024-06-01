@@ -134,59 +134,6 @@ export function App() {
     setLog(system.console._log);
   }, [astEditorObj, scriptEditorObj, setScript]);
 
-  // useEffect(() => {
-  //   if (!astEditorObj) {
-  //     return;
-  //   }
-
-  //   const disposable = astEditorObj.onDidChangeCursorPosition(async (e) => {
-  //     const editor = astEditorObj;
-  //     const model = editor.getModel();
-  //     setDecoratorRange(null);
-  //     if (!model) {
-  //       return null;
-  //     }
-
-  //     const value = getJSONObjectAtPosition(e.position, editor);
-
-  //     try {
-  //       if (value instanceof Error) {
-  //         throw value;
-  //       }
-
-  //       const parsed = JSON.parse(value);
-  //       const { kind, "@": pos } = parsed;
-  //       if (!kind || !pos || kind === "Program") {
-  //         return;
-  //       }
-
-  //       if (typeof pos === "string") {
-  //         const [sl, sc, el, ec] = pos.split(":").map((s) => parseInt(s));
-  //         setDecoratorRange(new monaco.Range(sl, sc, el, ec));
-  //       } else {
-  //         setDecoratorRange(
-  //           new monaco.Range(
-  //             pos.start.line,
-  //             pos.start.column,
-  //             pos.end.line,
-  //             pos.end.column
-  //           )
-  //         );
-  //         console.log(`${kind}@[${pos.start.line}:${pos.start.column}]`);
-  //       }
-  //     } catch (e) {
-  //       console.groupCollapsed("cant parse");
-  //       console.log("value", value);
-  //       console.error(e);
-  //       console.groupEnd();
-  //     }
-  //   });
-
-  //   return () => {
-  //     disposable.dispose();
-  //   };
-  // }, [astEditorObj]);
-
   return (
     <>
       <Allotment>
