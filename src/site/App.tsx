@@ -3,18 +3,18 @@ import "allotment/dist/style.css";
 import * as monaco from "monaco-editor";
 import { editor } from "monaco-editor";
 import { useCallback, useRef, useState } from "react";
+import { createUseStyles } from "react-jss";
+import Markdown from "react-markdown";
 import { useLocalStorage } from "usehooks-ts";
 import { tryParse } from "..";
 import { Environment } from "../lib/interpreter/env";
+import { ScriptPosError } from "../lib/interpreter/error";
 import { interpret, stringOfValue } from "../lib/interpreter/interpreter";
 import { InterpreterSystem } from "../lib/interpreter/system";
 import { ValType } from "../lib/interpreter/value";
+import { LangPos } from "../lib/parser/parser";
 import "./App.css";
 import { useEditor } from "./useEditor";
-import { createUseStyles } from "react-jss";
-import Markdown from "react-markdown";
-import { ScriptError, ScriptPosError } from "../lib/interpreter/error";
-import { LangPos } from "../lib/parser/parser";
 
 function div(str: string, classname?: string | null) {
   const elem = document.createElement("div");
@@ -63,7 +63,7 @@ export function App() {
   const [script, setScript] = useLocalStorage("klisp.script", DEFAULT_SCRIPT);
 
   const [decoratorRange, setDecoratorRange] = useState<null | monaco.Range>(
-    null
+    null,
   );
   const [scriptEditor, scriptEditorObj] = useEditor(
     {
@@ -77,7 +77,7 @@ export function App() {
       // wrappingIndent: "indent",
       // beforeMount: registerLangForMonaco,
     },
-    decoratorRange
+    decoratorRange,
   );
 
   const [astEditor, astEditorObj] = useEditor({
@@ -97,7 +97,7 @@ export function App() {
 
     function log(
       x: string | Error | ValType["Value"],
-      as: "log" | "value" | "error"
+      as: "log" | "value" | "error",
     ) {
       if (!logRef.current) {
         return;
@@ -111,7 +111,7 @@ export function App() {
         logRef.current.appendChild(div(x, classname));
       } else if (x instanceof ScriptPosError) {
         logRef.current.appendChild(
-          div(`Error: ${x.message} at ${posToStr(x.pos)}`, styles.logerror)
+          div(`Error: ${x.message} at ${posToStr(x.pos)}`, styles.logerror),
         );
       } else if (x instanceof Error) {
         logRef.current.appendChild(div(`Error: ${x.message}`, styles.logerror));
@@ -142,7 +142,7 @@ export function App() {
       const strvalue = JSON.stringify(
         ast,
         COMPACT_AST ? replacer : undefined,
-        2
+        2,
       );
 
       astEditorObj?.setValue(strvalue);

@@ -29,6 +29,7 @@
     "allotment": "^1.20.2",
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-react": "^7.34.2",
+    "monaco-editor": "^0.55.1",
     "parsimmon": "^1.18.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -51,6 +52,5 @@
     "react-github-btn": "^1.4.0",
     "typescript": "^5.4.5",
     "vite": "^5.2.12"
-  },
-  "packageManager": "yarn@3.3.1+sha256.1d2760eb5c0e525abe9c5306fac5fe0b5628c0955072a0da2f4043524497526a"
+  }
 }
