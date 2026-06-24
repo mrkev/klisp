@@ -6,13 +6,16 @@ import { useCallback, useRef, useState } from "react";
 import { createUseStyles } from "react-jss";
 import Markdown from "react-markdown";
 import { useLocalStorage } from "usehooks-ts";
-import { tryParse } from "..";
-import { Environment } from "../lib/interpreter/env";
-import { ScriptPosError } from "../lib/interpreter/error";
-import { interpret, stringOfValue } from "../lib/interpreter/interpreter";
-import { InterpreterSystem } from "../lib/interpreter/system";
-import { ValType } from "../lib/interpreter/value";
-import { LangPos } from "../lib/parser/parser";
+import {
+  Environment,
+  InterpreterSystem,
+  interpret,
+  type LangPos,
+  ScriptPosError,
+  stringOfValue,
+  tryParse,
+  type ValType,
+} from "../../klisp/src";
 import "./App.css";
 import { useEditor } from "./useEditor";
 

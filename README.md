@@ -1,6 +1,24 @@
-# Template for a library with React + TypeScript + Vite
+# klisp
 
-- `build:site` build the website to `docs`, so it can be served on Github Pages
-- `build:lib` build the library to `dist`, where `package.json` is configured to expect it
+A small Lisp interpreter written in TypeScript, with a web playground.
 
-**NOTE: Make sure to search and replace all instances of `"NEW_LIB"` with the appropriate value for your library**
+This is a pnpm + nx monorepo:
+
+```
+docs/             built website, GitHub Pages is configured to point here
+packages/
+  klisp/          the interpreter & parser (the library)
+  site/           the web playground (builds to ../../docs)
+```
+
+## Scripts (run from the repo root)
+
+- `pnpm build` — builds every package (`nx run-many -t build`). The site build
+  emits to `docs/` for GitHub Pages.
+- `pnpm build:lib` — builds only the `klisp` library to `packages/klisp/dist`
+- `pnpm build:site` — builds only the site
+- `pnpm dev` — starts the site dev server
+- `pnpm test` — runs the test suites
+- `pnpm lint` — lints the whole workspace
+
+The `site` package consumes `klisp` as a workspace dependency.

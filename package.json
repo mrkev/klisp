@@ -1,56 +1,27 @@
 {
-  "name": "klisp",
+  "name": "klisp-monorepo",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "main": "./dist/klisp.umd.cjs",
-  "module": "./dist/klisp.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/klisp.js",
-      "require": "./dist/klisp.umd.cjs"
-    }
-  },
-  "files": [
-    "dist"
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && npm run build:lib && npm run build:site",
-    "build:site": "vite build -c vite.config.ts --emptyOutDir",
-    "build:lib": "vite build -c vite.config.lib.ts",
-    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "test": "vitest run",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@monaco-editor/react": "^4.7.0",
-    "@types/parsimmon": "^1.10.9",
-    "allotment": "^1.20.5",
-    "monaco-editor": "^0.55.1",
-    "parsimmon": "^1.18.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-jss": "^10.10.0",
-    "react-markdown": "^10.1.0",
-    "usehooks-ts": "^3.1.1"
+    "dev": "npm run --workspace=site dev",
+    "build": "npx nx run-many -t build",
+    "build:site": "npm run --workspace=site build",
+    "build:lib": "npm run --workspace=klisp build",
+    "test": "npx nx run-many -t test",
+    "lint": "eslint"
   },
   "devDependencies": {
-    "@types/node": "^20.19.43",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.62.0",
-    "@typescript-eslint/parser": "^8.62.0",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@eslint/js": "^10.0.1",
     "eslint": "^10.5.0",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^15.0.0",
-    "react-github-btn": "^1.4.0",
+    "nx": "22.7.5",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16",
-    "vite-plugin-dts": "^5.0.2",
-    "vitest": "^4.1.9"
-  }
+    "typescript-eslint": "^8.62.0"
+  },
+  "packageManager": "pnpm@10.34.3"
 }

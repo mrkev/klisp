@@ -1,0 +1,35 @@
+{
+  "name": "klisp",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/klisp.umd.cjs",
+  "module": "./dist/klisp.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/klisp.js",
+      "require": "./dist/klisp.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite build -c vite.config.ts --watch",
+    "build": "tsc && vite build -c vite.config.ts --emptyOutDir",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "parsimmon": "^1.18.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/parsimmon": "^1.10.9",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "vite-plugin-dts": "^5.0.2",
+    "vitest": "^4.1.9"
+  }
+}

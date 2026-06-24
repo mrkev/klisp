@@ -19,8 +19,9 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "types": ["vite/client"]
   },
-  "include": ["src"],
+  "include": ["src/**/*", "vite-env.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
