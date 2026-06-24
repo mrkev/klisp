@@ -31,6 +31,8 @@ const Lisp = P.createLanguage<LangType>({
   // The basic parsers (usually the ones described via regexp) should have a
   // description for error message purposes.
   Symbol: function () {
+    // esier to read with the escapes imo
+    // eslint-disable-next-line no-useless-escape
     return P.regexp(/[a-zA-Z_\-\+\*\/][a-zA-Z0-9_-]*/)
       .desc("symbol")
       .mark()

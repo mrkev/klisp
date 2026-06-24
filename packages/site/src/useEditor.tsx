@@ -60,5 +60,5 @@ export function useEditor(
     }
   }, [decoration, editor]);
 
-  return [<Editor {...props} onMount={editorDidMount} />, editor];
+  return [<Editor key="editor" {...props} onMount={editorDidMount} />, editor];
 }

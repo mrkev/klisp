@@ -20,7 +20,7 @@ export function evaluateOp(
   op: BuiltInOp,
   exprs: Array<LangType["Expression"]>,
   env: Environment,
-  system: InterpreterSystem
+  system: InterpreterSystem,
 ): ValType["Value"] {
   switch (op) {
     case "let": {
@@ -40,6 +40,7 @@ export function evaluateOp(
 
       const [arglist, ...body] = exprs;
       if (arglist.kind !== "list") {
+        // todo: raise error perhaps?
       }
 
       const symbs = argumentList(arglist);
@@ -47,7 +48,7 @@ export function evaluateOp(
       return v.closure(
         symbs.map((s) => s.symbol),
         body,
-        env
+        env,
       );
     }
 
@@ -111,7 +112,7 @@ export function evaluateOp(
 }
 
 function expectNumbers(
-  vals: Array<ValType["Value"]>
+  vals: Array<ValType["Value"]>,
 ): Array<ValType["Number"]> {
   for (const val of vals) {
     if (val.kind !== "number") {
@@ -122,7 +123,7 @@ function expectNumbers(
 }
 
 function expectSymbolNodes(
-  vals: Array<LangType["Expression"]>
+  vals: Array<LangType["Expression"]>,
 ): Array<LangType["Symbol"]> {
   for (const val of vals) {
     if (val.kind !== "symbol") {
@@ -137,7 +138,7 @@ function argumentList(expr: LangType["Expression"]): Array<LangType["Symbol"]> {
     case "number":
       throw new ScriptPosError(
         "Identifier or identifier list expected",
-        expr["@"]
+        expr["@"],
       );
     case "list":
       return expectSymbolNodes(expr.list);

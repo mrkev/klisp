@@ -9,11 +9,11 @@ import { useLocalStorage } from "usehooks-ts";
 import {
   Environment,
   InterpreterSystem,
-  interpret,
-  type LangPos,
   ScriptPosError,
+  interpret,
   stringOfValue,
   tryParse,
+  type LangPos,
   type ValType,
 } from "../../klisp/src";
 import "./App.css";
@@ -21,7 +21,9 @@ import { useEditor } from "./useEditor";
 
 function div(str: string, classname?: string | null) {
   const elem = document.createElement("div");
-  classname != null && elem.setAttribute("class", classname);
+  if (classname != null) {
+    elem.setAttribute("class", classname);
+  }
   elem.appendChild(document.createTextNode(str));
   return elem;
 }
@@ -60,7 +62,7 @@ export function App() {
   const styles = useStyles();
   const [fatalScriptError, setFatalScriptError] = useState<Error | null>(null);
   const [systemError, setSystemError] = useState<Error | null>(null);
-  const [log, setLog] = useState<(Error | string)[]>([]);
+  const [, setLog] = useState<(Error | string)[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
 
   const [script, setScript] = useLocalStorage("klisp.script", DEFAULT_SCRIPT);
@@ -135,9 +137,10 @@ export function App() {
       setSystemError(null);
 
       const ast = tryParse(script);
-      const replacer = (key: string, value: any) => {
+      const replacer = (key: string, value: unknown) => {
         if (key === "@") {
-          return `${value.start.line}:${value.start.column}:${value.end.line}:${value.end.column}`;
+          const pos = value as LangPos;
+          return `${pos.start.line}:${pos.start.column}:${pos.end.line}:${pos.end.column}`;
         } else {
           return value;
         }

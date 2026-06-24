@@ -1,6 +1,6 @@
 import { LangType } from "../parser/parser";
 import { nullthrows } from "../utils";
-import { ScriptError, ScriptPosError } from "./error";
+import { ScriptPosError } from "./error";
 import { ValType, v } from "./value";
 
 // TODO: change ERRORS for more specific ones
@@ -34,7 +34,7 @@ export class ScopeStack {
   // we start with top-level map
 
   constructor(
-    private readonly stack: Array<Map<string, ValType["Value"]>> = [new Map()]
+    private readonly stack: Array<Map<string, ValType["Value"]>> = [new Map()],
   ) {}
 
   push() {
@@ -65,7 +65,7 @@ export class ScopeStack {
   private top() {
     return nullthrows(
       this.stack.at(-1),
-      "impossible: always at least one scope in stack"
+      "impossible: always at least one scope in stack",
     );
   }
 
@@ -78,7 +78,7 @@ export class ScopeStack {
       }
       return nullthrows(
         current.get(sym.symbol),
-        "impossible: checked for existance above"
+        "impossible: checked for existance above",
       );
     }
 
